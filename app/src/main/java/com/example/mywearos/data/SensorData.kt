@@ -1,4 +1,4 @@
-package com.example.mywearos.sensordata
+package com.example.mywearos.data
 
 import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
@@ -8,7 +8,7 @@ import kotlinx.coroutines.launch
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 
-class SensorDataViewModel: ViewModel(){
+class SensorData: ViewModel(){
     var lastTouches by mutableStateOf("")
 
     init {
@@ -16,9 +16,8 @@ class SensorDataViewModel: ViewModel(){
     }
 
     private fun getNewData(){
-        var waiting = true
         viewModelScope.launch(Dispatchers.IO) {
-            while(waiting) {
+            while(true) {
                 waitingForData()
             }
         }
