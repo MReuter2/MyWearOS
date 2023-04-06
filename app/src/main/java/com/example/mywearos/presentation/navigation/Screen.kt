@@ -6,5 +6,6 @@ sealed class Screen (
     val route: String
     )
 {
- object Landing: Screen("landing")
+    object Landing: Screen("landing")
+    object RawSensorData: Screen("rawSensorData")
 }
