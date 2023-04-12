@@ -1,9 +1,9 @@
 package com.example.mywearos.presentation.ui.sensordata
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Text
@@ -17,13 +17,19 @@ fun RawSensorDataScreen(
     modifier: Modifier = Modifier
 ) {
     val touches = stringToTouches(sensorData.lastTouches)
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(top = 10.dp)
-    ) {
-        for (touch in touches) {
-            Text(text = touch.toString())
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ){
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(top = 10.dp)
+                .align(Alignment.Center),
+            verticalArrangement = Arrangement.Center
+        ) {
+            for (touch in touches) {
+                Text(text = touch.toString(), modifier = Modifier.align(CenterHorizontally))
+            }
         }
     }
 }

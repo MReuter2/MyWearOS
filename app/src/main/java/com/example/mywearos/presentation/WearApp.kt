@@ -18,9 +18,9 @@ import com.example.mywearos.presentation.navigation.DestinationScrollType
 import com.example.mywearos.presentation.navigation.SCROLL_TYPE_NAV_ARGUMENT
 import com.example.mywearos.presentation.navigation.Screen
 import com.example.mywearos.presentation.theme.MyWearOSTheme
-import com.example.mywearos.presentation.theme.wearColorPalette
 import com.example.mywearos.presentation.ui.ScalingLazyListStateViewModel
 import com.example.mywearos.presentation.ui.ScrollStateViewModel
+import com.example.mywearos.presentation.ui.addressbook.AddressBookScreen
 import com.example.mywearos.presentation.ui.landing.LandingScreen
 import com.example.mywearos.presentation.ui.sensordata.RawSensorDataScreen
 
@@ -29,11 +29,8 @@ fun WearApp(
     modifier: Modifier = Modifier,
     swipeDissmissableNavController: NavHostController = rememberSwipeDismissableNavController()
 ){
-    var themeColors by remember { mutableStateOf( wearColorPalette ) }
     val sensorData = SensorData()
-    MyWearOSTheme(
-        colors = themeColors
-    ) {
+    MyWearOSTheme {
         val currentBackStackEntry by swipeDissmissableNavController.currentBackStackEntryAsState()
         val scrollType = currentBackStackEntry?.arguments?.getSerializable(SCROLL_TYPE_NAV_ARGUMENT) ?: DestinationScrollType.NONE
 
@@ -78,7 +75,8 @@ fun WearApp(
 
                    LandingScreen(
                        scalingLazyListState = scalingLazyListState,
-                       onClickRawSensorData = { swipeDissmissableNavController.navigate(Screen.RawSensorData.route) }
+                       onClickRawSensorData = { swipeDissmissableNavController.navigate(Screen.RawSensorData.route) },
+                       onClickAddressBook = { swipeDissmissableNavController.navigate(Screen.AddressBook.route) }
                    )
                 }
 
@@ -86,6 +84,22 @@ fun WearApp(
                     route = Screen.RawSensorData.route
                 ){
                     RawSensorDataScreen(sensorData = sensorData)
+                }
+
+                composable(
+                    route = Screen.AddressBook.route,
+                    arguments = listOf(
+                        navArgument(SCROLL_TYPE_NAV_ARGUMENT){
+                            type = NavType.EnumType(DestinationScrollType::class.java)
+                            defaultValue = DestinationScrollType.SCALING_LAZY_COLUMN_SCROLLING
+                        }
+                    )
+                ){
+                    val scalingLazyListState = scalingLazyListState(it)
+
+                    AddressBookScreen(
+                        scalingLazyListState = scalingLazyListState
+                    )
                 }
             }
         }

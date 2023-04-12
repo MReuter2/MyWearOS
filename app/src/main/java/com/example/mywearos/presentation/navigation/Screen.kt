@@ -8,4 +8,5 @@ sealed class Screen (
 {
     object Landing: Screen("landing")
     object RawSensorData: Screen("rawSensorData")
+    object AddressBook: Screen("addressBook")
 }
