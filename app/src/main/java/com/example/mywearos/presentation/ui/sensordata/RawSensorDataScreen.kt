@@ -2,21 +2,22 @@ package com.example.mywearos.presentation.ui.sensordata
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Text
-import com.example.mywearos.data.SensorData
-import com.example.mywearos.data.stringToTouches
 
 
 @Composable
 fun RawSensorDataScreen(
-    sensorData: SensorData,
+    sensorDataViewModel: SensorDataViewModel,
     modifier: Modifier = Modifier
 ) {
-    val touches = stringToTouches(sensorData.lastTouches)
+    val touches = remember { sensorDataViewModel.latestTouches }
+    val isScroll = remember { sensorDataViewModel.isScroll }
+    val scroll = remember { sensorDataViewModel.scroll }
     Box(
         modifier = Modifier.fillMaxSize()
     ){
@@ -27,6 +28,8 @@ fun RawSensorDataScreen(
                 .align(Alignment.Center),
             verticalArrangement = Arrangement.Center
         ) {
+            if(isScroll.value)
+                Text(text = scroll.value.toString(), modifier = Modifier.align(CenterHorizontally))
             for (touch in touches) {
                 Text(text = touch.toString(), modifier = Modifier.align(CenterHorizontally))
             }

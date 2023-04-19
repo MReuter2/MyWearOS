@@ -7,6 +7,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.painter.BrushPainter
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.*
@@ -15,13 +18,13 @@ import com.example.mywearos.data.ContactRepo
 import com.example.mywearos.presentation.theme.MyWearOSTheme
 
 @Composable
-fun AddressBookScreen(scalingLazyListState: ScalingLazyListState){
-    Box(modifier = Modifier.fillMaxSize()){
+fun AddressBookScreen(scalingLazyListState: ScalingLazyListState, modifier: Modifier = Modifier){
+    Box(modifier = modifier.fillMaxSize()){
         ScalingLazyColumn(
             state = scalingLazyListState,
             autoCentering = AutoCenteringParams(itemIndex = 0)
         ){
-            items(1){
+            item{
                 ContactGroup(contacts = ContactRepo.getContacts())
             }
         }
@@ -30,12 +33,18 @@ fun AddressBookScreen(scalingLazyListState: ScalingLazyListState){
 
 @Composable
 fun ContactGroup(contacts: List<Contact>, modifier: Modifier = Modifier){
-        Box(
+    val sortedContacts = contacts.sortedBy { it.lastname  }
+        Card(
+            onClick = {},
+            backgroundPainter = BrushPainter(
+                brush = Brush.sweepGradient(
+                    listOf(MaterialTheme.colors.onPrimary, MaterialTheme.colors.onPrimary)
+                )
+            ),
             modifier = modifier
-                .clip(MaterialTheme.shapes.small)
         ) {
             Column {
-                for (contact in contacts) {
+                for (contact in sortedContacts) {
                     ContactRow(contact = contact)
                 }
             }
@@ -50,7 +59,10 @@ fun ContactRow(contact: Contact, modifier: Modifier = Modifier){
     ) {
         LetterIcon(letter = contact.lastname.get(0).toString())
         Text(
-            "${contact.lastname}, ${contact.firstname}",
+            "${contact.firstname} ${contact.lastname}",
+            maxLines = 1,
+            style = MaterialTheme.typography.caption1,
+            overflow = TextOverflow.Ellipsis,
             modifier = modifier.padding(start = 5.dp)
         )
     }
@@ -61,9 +73,9 @@ fun LetterIcon(letter: String, modifier: Modifier = Modifier){
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
-            .size(40.dp)
+            .size(34.dp)
             .clip(CircleShape)
-            .background(MaterialTheme.colors.secondary)
+            .background(MaterialTheme.colors.primaryVariant)
     ){
         Text(letter, style = MaterialTheme.typography.title1)
     }

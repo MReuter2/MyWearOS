@@ -1,59 +1,73 @@
 package com.example.mywearos.data
 
-import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.mywearos.presentation.ui.sensordata.Touch
+import com.example.mywearos.presentation.ui.sensordata.TouchHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.net.BindException
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 
 class SensorData: ViewModel(){
-    var lastTouches by mutableStateOf("")
+    val touchHandler = TouchHandler()
+    var isWaiting = false
 
     init {
-        getNewData()
+        waitForData()
     }
 
-    private fun getNewData(){
+    fun stopWaiting(){
+        isWaiting = false
+    }
+
+    fun waitForData(){
+        isWaiting = true
         viewModelScope.launch(Dispatchers.IO) {
-            while(true) {
-                waitingForData()
+            while(isWaiting) {
+                receiveData()
             }
         }
     }
-
-    fun waitingForData(){
-            val buffer = ByteArray(1024)
-            var socket: DatagramSocket? = null
-            try {
-                socket = DatagramSocket(44444)
-                socket.broadcast = true
-                val packet = DatagramPacket(buffer, buffer.size)
-                socket.receive(packet)
-                val sensorDataString = packet.data.decodeToString().substringAfter("[").substringBefore("]")
-                lastTouches = sensorDataString
-            } catch (e: Exception) {
-                println("open fun receiveUDP catch exception." + e.toString())
-                e.printStackTrace()
-            } finally {
-                socket?.close()
+    suspend fun receiveData(){
+        val buffer = ByteArray(1024)
+        var socket: DatagramSocket? = null
+        try {
+            socket = withContext(Dispatchers.IO) {
+                DatagramSocket(44444)
             }
-    }
-}
-
-class Touch(val location: Int?, val size: Int?){
-    override fun toString(): String {
-        return "Location: $location, size: $size"
+            socket.broadcast = true
+            val packet = DatagramPacket(buffer, buffer.size)
+            withContext(Dispatchers.IO) {
+                socket.receive(packet)
+            }
+            val sensorDataString = packet.data.decodeToString().substringAfter("[").substringBefore("]")
+            val newTouches = stringToTouches(sensorDataString)
+            touchHandler.addTouches(newTouches)
+        } catch (e: Exception) {
+            println("open fun receiveUDP catch exception.$e")
+            if(e is BindException) {
+                stopWaiting()
+            }
+            e.printStackTrace()
+        } finally {
+            socket?.close()
+        }
     }
 }
 
 // String = {location: 1201, size: 120}
-fun stringToTouch(string: String): Touch{
+fun stringToTouch(string: String): Touch?{
     val array = string.split(",")
     val locationString = array.first().removePrefix("{location:").trim()
     val sizeString = array.last().trim().removePrefix("size: ").removeSuffix("}").trim()
-    val touch = Touch(locationString.toIntOrNull(), sizeString.toIntOrNull())
+    val location = locationString.toIntOrNull()
+    val size = sizeString.toIntOrNull()
+    if(location == null || size == null)
+        return null
+    val touch = Touch(location, size)
     return touch
 }
 
@@ -62,7 +76,10 @@ fun stringToTouches(string: String): List<Touch>{
     val array = string.split(" , ")
     val touches = mutableListOf<Touch>()
     for(element in array){
-        touches.add(stringToTouch(element.trim()))
+        val touch = stringToTouch(element.trim())
+        if (touch != null) {
+            touches.add(touch)
+        }
     }
     return touches
 }

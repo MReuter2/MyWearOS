@@ -1,7 +1,8 @@
 package com.example.mywearos.presentation
 
 import androidx.compose.foundation.background
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
@@ -13,7 +14,6 @@ import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.currentBackStackEntryAsState
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
-import com.example.mywearos.data.SensorData
 import com.example.mywearos.presentation.navigation.DestinationScrollType
 import com.example.mywearos.presentation.navigation.SCROLL_TYPE_NAV_ARGUMENT
 import com.example.mywearos.presentation.navigation.Screen
@@ -23,13 +23,14 @@ import com.example.mywearos.presentation.ui.ScrollStateViewModel
 import com.example.mywearos.presentation.ui.addressbook.AddressBookScreen
 import com.example.mywearos.presentation.ui.landing.LandingScreen
 import com.example.mywearos.presentation.ui.sensordata.RawSensorDataScreen
+import com.example.mywearos.presentation.ui.sensordata.SensorDataViewModel
 
 @Composable
 fun WearApp(
     modifier: Modifier = Modifier,
-    swipeDissmissableNavController: NavHostController = rememberSwipeDismissableNavController()
+    swipeDissmissableNavController: NavHostController = rememberSwipeDismissableNavController(),
+    sensorDataViewModel: SensorDataViewModel
 ){
-    val sensorData = SensorData()
     MyWearOSTheme {
         val currentBackStackEntry by swipeDissmissableNavController.currentBackStackEntryAsState()
         val scrollType = currentBackStackEntry?.arguments?.getSerializable(SCROLL_TYPE_NAV_ARGUMENT) ?: DestinationScrollType.NONE
@@ -83,7 +84,7 @@ fun WearApp(
                 composable(
                     route = Screen.RawSensorData.route
                 ){
-                    RawSensorDataScreen(sensorData = sensorData)
+                    RawSensorDataScreen(sensorDataViewModel = sensorDataViewModel)
                 }
 
                 composable(
