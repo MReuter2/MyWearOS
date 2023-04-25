@@ -5,7 +5,7 @@ data class Contact(val firstname: String, val lastname: String, val number: Stri
 object ContactRepo{
     fun getContacts() = contacts.sortedBy { it.lastname  }
 
-    fun getContactsSeperatedByFirstLetter(): List<List<Contact>>{
+    fun getContactsSeparatedByFirstLetter(): List<List<Contact>>{
         val allContactsSortedByLastname = contacts.sortedBy { it.lastname  }
         val seperatedContacts = mutableListOf<List<Contact>>()
         var currentLetterGroup = mutableListOf<Contact>()

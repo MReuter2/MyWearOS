@@ -11,13 +11,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.navigation.NavHostController
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
-import com.example.mywearos.data.SensorData
+import com.example.mywearos.data.sensor.SensorDataReceiver
 import com.example.mywearos.presentation.ui.sensordata.SensorDataViewModel
 
 class MainActivity : ComponentActivity() {
     internal lateinit var navController: NavHostController
-    val sensorData = SensorData()
-    val sensorDataViewModel = SensorDataViewModel(sensorData)
+    val sensorDataReceiver = SensorDataReceiver()
+    val sensorDataViewModel = SensorDataViewModel(sensorDataReceiver)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

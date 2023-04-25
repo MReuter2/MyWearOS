@@ -15,9 +15,8 @@ fun RawSensorDataScreen(
     sensorDataViewModel: SensorDataViewModel,
     modifier: Modifier = Modifier
 ) {
-    val touches = remember { sensorDataViewModel.latestTouches }
-    val isScroll = remember { sensorDataViewModel.isScroll }
-    val scroll = remember { sensorDataViewModel.scroll }
+    val sensorData = remember { sensorDataViewModel.allSensorData }
+    val event = remember { sensorDataViewModel.allEvents }
     Box(
         modifier = Modifier.fillMaxSize()
     ){
@@ -28,10 +27,13 @@ fun RawSensorDataScreen(
                 .align(Alignment.Center),
             verticalArrangement = Arrangement.Center
         ) {
-            if(isScroll.value)
-                Text(text = scroll.value.toString(), modifier = Modifier.align(CenterHorizontally))
-            for (touch in touches) {
-                Text(text = touch.toString(), modifier = Modifier.align(CenterHorizontally))
+            if(event.isNotEmpty()){
+                Text(text = "Event: ${event.last()}", modifier = Modifier.align(CenterHorizontally))
+            }
+            if(sensorData.isNotEmpty()){
+                for (locationWithSize in sensorData.last().locationsWithSize) {
+                    Text(text = "Location: ${locationWithSize.first}, Size: ${locationWithSize.second}", modifier = Modifier.align(CenterHorizontally))
+                }
             }
         }
     }

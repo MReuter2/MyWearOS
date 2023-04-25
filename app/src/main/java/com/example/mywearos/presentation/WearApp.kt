@@ -97,9 +97,8 @@ fun WearApp(
                     )
                 ){
                     val scalingLazyListState = scalingLazyListState(it)
-
                     AddressBookScreen(
-                        scalingLazyListState = scalingLazyListState
+                        sensorDataViewModel = sensorDataViewModel
                     )
                 }
             }
