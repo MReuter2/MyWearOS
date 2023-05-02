@@ -16,7 +16,7 @@ fun RawSensorDataScreen(
     modifier: Modifier = Modifier
 ) {
     val sensorData = remember { sensorDataViewModel.allSensorData }
-    val event = remember { sensorDataViewModel.allEvents }
+    val latestEvent = remember { sensorDataViewModel.latestEvent }
     Box(
         modifier = Modifier.fillMaxSize()
     ){
@@ -27,9 +27,7 @@ fun RawSensorDataScreen(
                 .align(Alignment.Center),
             verticalArrangement = Arrangement.Center
         ) {
-            if(event.isNotEmpty()){
-                Text(text = "Event: ${event.last()}", modifier = Modifier.align(CenterHorizontally))
-            }
+            Text(text = "Event: ${latestEvent}", modifier = Modifier.align(CenterHorizontally))
             if(sensorData.isNotEmpty()){
                 for (locationWithSize in sensorData.last().locationsWithSize) {
                     Text(text = "Location: ${locationWithSize.first}, Size: ${locationWithSize.second}", modifier = Modifier.align(CenterHorizontally))

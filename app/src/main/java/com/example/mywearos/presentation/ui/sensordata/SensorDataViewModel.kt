@@ -1,5 +1,6 @@
 package com.example.mywearos.presentation.ui.sensordata
 
+import androidx.compose.runtime.State
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import com.example.mywearos.data.sensor.RawSensorData
@@ -14,4 +15,8 @@ class SensorDataViewModel(sensorDataReceiver: SensorDataReceiver): ViewModel() {
     private val _allTrillFlexEvents = sensorDataReceiver.trillFlexSensor.allEvents
     val allEvents: SnapshotStateList<TrillFlexEvent>
         get() = _allTrillFlexEvents
+
+    private val _latestEvent = sensorDataReceiver.trillFlexSensor.latestEvent
+    val latestEvent: State<TrillFlexEvent>
+        get() = _latestEvent
 }

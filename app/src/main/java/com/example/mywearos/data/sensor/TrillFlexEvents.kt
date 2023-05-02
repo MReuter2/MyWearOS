@@ -1,8 +1,6 @@
 package com.example.mywearos.data.sensor
 
-interface TrillFlexEvent{
-
-}
+interface TrillFlexEvent
 
 //Location: 0-3712, Size: 1-...
 class Touch: TrillFlexEvent{
@@ -18,9 +16,11 @@ class Scroll(val pace: Int): TrillFlexEvent{
     }
 }
 
-class MultiTouch(val touches: List<Touch>): TrillFlexEvent
-
-class MultiScroll(val scrolls: List<Scroll>): TrillFlexEvent
+class TwoFingerScroll(val pace: Int): TrillFlexEvent{
+    override fun toString(): String {
+        return "TwoFingerScoll, Pace: $pace"
+    }
+}
 
 class NoEvent(): TrillFlexEvent{
     override fun toString(): String {

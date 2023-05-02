@@ -1,27 +1,33 @@
 package com.example.mywearos.data.sensor
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import kotlin.math.absoluteValue
 
 class TrillFlexSensor {
     val allEvents = mutableStateListOf<TrillFlexEvent>()
+    val latestEvent = mutableStateOf<TrillFlexEvent>(NoEvent())
+
     val allSensorData = mutableStateListOf<RawSensorData>()
+    val latestSensorData: RawSensorData?
+        get() = if(allSensorData.isNotEmpty()) allSensorData.last() else null
 
     fun addRawSensorData(newSensorData: RawSensorData){
         val newEvent = identifyNewEventWithSensorData(newSensorData)
 
         allSensorData.add(newSensorData)
         allEvents.add(newEvent)
+        latestEvent.value = newEvent
     }
 
     private fun identifyNewEventWithSensorData(newSensorData: RawSensorData): TrillFlexEvent{
         var newEvent: TrillFlexEvent = NoEvent()
-        val lastEvent: TrillFlexEvent = if(allEvents.isNotEmpty()) allEvents.last() else NoEvent()
-        val lastRawSensorData: RawSensorData? = if(allSensorData.isNotEmpty()) allSensorData.last() else null
-        if(lastRawSensorData != null){
+        val currentLatestSensorData = latestSensorData
+
+        if(currentLatestSensorData != null){
             val locationDifferencesBetweenNewAndOldSensorData =
-                getLocationDifferencesBetweenRawSensorData(lastRawSensorData, newSensorData)
-            when (newSensorData.locationsWithSize.size) {
+                getLocationDifferencesBetweenRawSensorData(currentLatestSensorData, newSensorData)
+            when (newSensorData.size) {
                 1 -> {
                     if (locationDifferencesBetweenNewAndOldSensorData.first().absoluteValue < 4)
                         newEvent = Touch()
@@ -29,8 +35,14 @@ class TrillFlexSensor {
                         if (locationDifferencesBetweenNewAndOldSensorData.first().absoluteValue > 10)
                             newEvent = Scroll(locationDifferencesBetweenNewAndOldSensorData.first())
                 }
-
-                2, 3, 4, 5 -> {
+                2 -> {
+                    if(locationDifferencesBetweenNewAndOldSensorData.first() > 10) {
+                        val pace = (locationDifferencesBetweenNewAndOldSensorData.first()
+                                    + locationDifferencesBetweenNewAndOldSensorData.last()) / 2
+                        newEvent = TwoFingerScroll(pace)
+                    }
+                }
+                3, 4, 5 -> {
                     if (locationDifferencesBetweenNewAndOldSensorData.first().absoluteValue < 4)
                         newEvent = Touch()
                     else
@@ -64,4 +76,7 @@ class TrillFlexSensor {
     }
 }
 
-data class RawSensorData(val locationsWithSize: List<Pair<Int, Int>>)
+data class RawSensorData(val locationsWithSize: List<Pair<Int, Int>>){
+    val size: Int
+        get() = locationsWithSize.size
+}

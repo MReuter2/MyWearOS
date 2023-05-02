@@ -88,15 +88,8 @@ fun WearApp(
                 }
 
                 composable(
-                    route = Screen.AddressBook.route,
-                    arguments = listOf(
-                        navArgument(SCROLL_TYPE_NAV_ARGUMENT){
-                            type = NavType.EnumType(DestinationScrollType::class.java)
-                            defaultValue = DestinationScrollType.SCALING_LAZY_COLUMN_SCROLLING
-                        }
-                    )
+                    route = Screen.AddressBook.route
                 ){
-                    val scalingLazyListState = scalingLazyListState(it)
                     AddressBookScreen(
                         sensorDataViewModel = sensorDataViewModel
                     )
@@ -105,7 +98,6 @@ fun WearApp(
         }
     }
 }
-
 @Composable
 private fun scalingLazyListState(it: NavBackStackEntry): ScalingLazyListState{
     val passedScrollType = it.arguments?.getSerializable(SCROLL_TYPE_NAV_ARGUMENT)

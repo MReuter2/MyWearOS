@@ -2,8 +2,15 @@ package com.example.mywearos.presentation.ui.addressbook
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.scrollBy
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Divider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -15,10 +22,16 @@ import androidx.compose.ui.graphics.painter.BrushPainter
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.material.*
+import androidx.wear.compose.material.AutoCenteringParams
+import androidx.wear.compose.material.Card
+import androidx.wear.compose.material.MaterialTheme
+import androidx.wear.compose.material.ScalingLazyColumn
+import androidx.wear.compose.material.Text
+import androidx.wear.compose.material.rememberScalingLazyListState
 import com.example.mywearos.data.Contact
 import com.example.mywearos.data.ContactRepo
 import com.example.mywearos.data.sensor.Scroll
+import com.example.mywearos.data.sensor.TwoFingerScroll
 import com.example.mywearos.presentation.theme.MyWearOSTheme
 import com.example.mywearos.presentation.ui.sensordata.SensorDataViewModel
 
@@ -26,14 +39,17 @@ import com.example.mywearos.presentation.ui.sensordata.SensorDataViewModel
 fun AddressBookScreen(sensorDataViewModel: SensorDataViewModel, modifier: Modifier = Modifier){
     val listState = rememberScalingLazyListState()
     val contactsSeparatedInLetterGroups = ContactRepo.getContactsSeparatedByFirstLetter()
-    val allEvents = remember { sensorDataViewModel.allEvents }
+    val latestEvent = remember { sensorDataViewModel.latestEvent }
 
     LaunchedEffect(
-        if(allEvents.isNotEmpty()) allEvents.last() else 0
+        latestEvent
     ){
-        if(allEvents.isNotEmpty() && allEvents.last() is Scroll) {
-            val currentScroll = allEvents.last() as Scroll
+        if(latestEvent.value is Scroll) {
+            val currentScroll = latestEvent.value as Scroll
             currentScroll.let { listState.scrollBy(it.pace.toFloat()) }
+        }
+        if(latestEvent.value is TwoFingerScroll){
+            listState.animateScrollToItem(listState.centerItemIndex + 1)
         }
         /*listState.scrollToItem(
             index = if(listState.centerItemIndex + (scroll.value?.pace?.toInt() ?: 0) < 0) 0
@@ -46,21 +62,21 @@ fun AddressBookScreen(sensorDataViewModel: SensorDataViewModel, modifier: Modifi
             state = listState,
             autoCentering = AutoCenteringParams(itemIndex = 0)
         ){
-            item{
-                Spacer(modifier = Modifier.padding(1.dp))
-            }
-            items(contactsSeparatedInLetterGroups.size){
-                if(it != 0)
-                    Spacer(modifier = Modifier.padding(10.dp))
-                ContactGroup(contacts = contactsSeparatedInLetterGroups.get(it))
-            }
 
             contactsSeparatedInLetterGroups.forEachIndexed { index, contacts ->
+                if(index == 0)
+                    item{
+                        Spacer(modifier = Modifier.padding(1.dp))
+                    }
                 item {
                     if(index != 0)
                         Spacer(modifier = Modifier.padding(10.dp))
                     ContactGroup(contacts = contacts)
                 }
+                if(index == contactsSeparatedInLetterGroups.lastIndex)
+                    item{
+                        Spacer(modifier = Modifier.padding(1.dp))
+                    }
             }
         }
     }
@@ -69,6 +85,14 @@ fun AddressBookScreen(sensorDataViewModel: SensorDataViewModel, modifier: Modifi
 @Composable
 fun ContactGroup(contacts: List<Contact>, modifier: Modifier = Modifier){
     val sortedContacts = contacts.sortedBy { it.lastname  }
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = sortedContacts.first().lastname[0].toString(),
+            style = MaterialTheme.typography.title3,
+            modifier = Modifier.padding(10.dp)
+        )
         Card(
             onClick = {},
             backgroundPainter = BrushPainter(
@@ -79,11 +103,18 @@ fun ContactGroup(contacts: List<Contact>, modifier: Modifier = Modifier){
             modifier = modifier
         ) {
             Column {
-                for (contact in sortedContacts) {
+                sortedContacts.forEachIndexed { index, contact ->
+                    if(index != 0)
+                        Divider(
+                            thickness = 1.dp,
+                            color = MaterialTheme.colors.onBackground.copy(alpha = 0.2f),
+                            modifier = Modifier.padding(vertical = 5.dp, horizontal = 10.dp)
+                        )
                     ContactRow(contact = contact)
                 }
             }
         }
+    }
 }
 
 @Composable
@@ -116,15 +147,11 @@ fun LetterIcon(letter: String, modifier: Modifier = Modifier){
     }
 }
 
-@Preview("Contactgroup", showBackground = true)
+@Preview("Contactgroup", showBackground = true, device = "spec:width=220dp,height=891dp")
 @Composable
 private fun ContactGroupPreview(){
     MyWearOSTheme {
-        ScalingLazyColumn{
-            item{
-                ContactGroup(contacts = ContactRepo.getContacts())
-            }
-        }
+        ContactGroup(contacts = ContactRepo.getContactsSeparatedByFirstLetter().first())
     }
 }
 
