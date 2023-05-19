@@ -1,59 +1,42 @@
 package com.example.mywearos.data.sensor
 
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
+import android.util.Log
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.math.absoluteValue
 
-class TrillFlexSensor {
-    val allEvents = mutableStateListOf<TrillFlexEvent>()
-    val latestEvent = mutableStateOf<TrillFlexEvent>(NoEvent())
-
-    val allSensorData = mutableStateListOf<RawSensorData>()
-    val latestSensorData: RawSensorData?
-        get() = if(allSensorData.isNotEmpty()) allSensorData.last() else null
-
-    fun addRawSensorData(newSensorData: RawSensorData){
-        val newEvent = identifyNewEventWithSensorData(newSensorData)
-
-        allSensorData.add(newSensorData)
-        allEvents.add(newEvent)
-        latestEvent.value = newEvent
-    }
+class TrillFlexSensor: SensorDataReceiverObserver {
+    val events: MutableStateFlow<TrillFlexEvent> = MutableStateFlow(NoEvent())
+    private val allEvents = mutableListOf<TrillFlexEvent>(NoEvent())
+    val sensorData: MutableStateFlow<RawSensorData> = MutableStateFlow(RawSensorData(emptyList()))
 
     private fun identifyNewEventWithSensorData(newSensorData: RawSensorData): TrillFlexEvent{
         var newEvent: TrillFlexEvent = NoEvent()
-        val currentLatestSensorData = latestSensorData
+        val latestSensorData = sensorData.value
 
-        if(currentLatestSensorData != null){
-            val locationDifferencesBetweenNewAndOldSensorData =
-                getLocationDifferencesBetweenRawSensorData(currentLatestSensorData, newSensorData)
-            when (newSensorData.size) {
-                1 -> {
-                    if (locationDifferencesBetweenNewAndOldSensorData.first().absoluteValue < 4)
-                        newEvent = Touch()
-                    else
-                        if (locationDifferencesBetweenNewAndOldSensorData.first().absoluteValue > 10)
-                            newEvent = Scroll(locationDifferencesBetweenNewAndOldSensorData.first())
-                }
-                2 -> {
-                    if(locationDifferencesBetweenNewAndOldSensorData.first() > 10) {
-                        val pace = (locationDifferencesBetweenNewAndOldSensorData.first()
-                                    + locationDifferencesBetweenNewAndOldSensorData.last()) / 2
-                        newEvent = TwoFingerScroll(pace)
-                    }
-                }
-                3, 4, 5 -> {
-                    if (locationDifferencesBetweenNewAndOldSensorData.first().absoluteValue < 4)
-                        newEvent = Touch()
-                    else
-                        if (locationDifferencesBetweenNewAndOldSensorData.first().absoluteValue > 4)
-                            newEvent = Scroll(locationDifferencesBetweenNewAndOldSensorData.first())
+        val locationDifferencesBetweenNewAndOldSensorData =
+            getLocationDifferencesBetweenRawSensorData(latestSensorData, newSensorData)
+        val actionDirection = if(locationDifferencesBetweenNewAndOldSensorData.first() < 0)
+                ActionDirection.POSITIVE else ActionDirection.NEGATIVE
+        val pace = locationDifferencesBetweenNewAndOldSensorData.first().absoluteValue
+        val numberOfFingers = latestSensorData.size
+        when {
+            pace < 4 -> {
+                if(allEvents.last() !is Scroll) {
+                    newEvent = Touch(numberOfFingers)
+                }else{
+                    newEvent = Scroll(actionDirection, pace, numberOfFingers)
                 }
             }
-        }else{
-            newEvent = Touch()
+            pace > 4 -> {
+                if(numberOfFingers < 3){
+                    newEvent = Scroll(actionDirection, pace, numberOfFingers)
+                }else{
+                    if(allEvents.last() !is Swipe) {
+                        newEvent = Swipe(actionDirection, numberOfFingers)
+                    }
+                }
+            }
         }
-
         return newEvent
     }
 
@@ -73,6 +56,15 @@ class TrillFlexSensor {
             differences.add(0)
 
         return differences
+    }
+
+    override fun update(newSensorData: String) {
+        val rawSensorData = stringToRawSensorData(newSensorData.substringAfter("[").substringBefore("]"))
+        val newEvent = identifyNewEventWithSensorData(rawSensorData)
+        Log.d("EVENT", newEvent.toString())
+        allEvents.add(newEvent)
+        sensorData.value = rawSensorData
+        events.value = newEvent
     }
 }
 

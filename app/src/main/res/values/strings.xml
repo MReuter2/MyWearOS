@@ -7,4 +7,5 @@
     <string name="hello_world">From the Square world,\nHello, %1$s!</string>
     <string name="raw_sensordata_button_label">Raw Sensordata</string>
     <string name="address_book_button_label">Address book</string>
+    <string name="music_player_button_label">Music Player</string>
 </resources>

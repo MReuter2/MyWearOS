@@ -1,29 +1,37 @@
 package com.example.mywearos.data.sensor
 
-interface TrillFlexEvent
+interface TrillFlexEvent{
+    val numberOfFingers: Int
+}
 
 //Location: 0-3712, Size: 1-...
-class Touch: TrillFlexEvent{
+class Touch(override val numberOfFingers: Int): TrillFlexEvent{
     override fun toString(): String {
-        return "Touch"
+        return "Touch, Fingers: $numberOfFingers"
     }
 }
 
 //Pace: 0-1f
-class Scroll(val pace: Int): TrillFlexEvent{
+class Scroll(val direction: ActionDirection, var pace: Int, override val numberOfFingers: Int): TrillFlexEvent{
     override fun toString(): String {
-        return "Scroll, Pace: $pace"
+        return "Scroll, Fingers: $numberOfFingers, Pace: $pace"
     }
 }
 
-class TwoFingerScroll(val pace: Int): TrillFlexEvent{
+class Swipe(val direction: ActionDirection, override val numberOfFingers: Int): TrillFlexEvent{
     override fun toString(): String {
-        return "TwoFingerScoll, Pace: $pace"
+        return "Swipe, Direction: $direction, Fingers: $numberOfFingers"
     }
 }
 
 class NoEvent(): TrillFlexEvent{
+    override val numberOfFingers: Int = 0
     override fun toString(): String {
         return "No Event!"
     }
+}
+
+enum class ActionDirection{
+    POSITIVE,
+    NEGATIVE
 }

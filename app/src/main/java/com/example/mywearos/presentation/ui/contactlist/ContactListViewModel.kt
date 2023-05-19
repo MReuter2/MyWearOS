@@ -1,20 +1,21 @@
-package com.example.mywearos.presentation.ui.sensordata
+package com.example.mywearos.presentation.ui.contactlist
 
 import androidx.lifecycle.ViewModel
-import com.example.mywearos.data.sensor.RawSensorData
+import com.example.mywearos.data.ContactRepo
+import com.example.mywearos.data.sensor.Scroll
 import com.example.mywearos.data.sensor.SensorDataReceiver
 import com.example.mywearos.data.sensor.TrillFlexEvent
 import com.example.mywearos.data.sensor.TrillFlexSensor
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filter
 
-class SensorDataViewModel: ViewModel() {
+class ContactListViewModel: ViewModel(){
     private val _sensorDataReceiver = SensorDataReceiver()
     private val _trillFlex = TrillFlexSensor()
-    private val _trillFlexEvent: MutableStateFlow<TrillFlexEvent> = _trillFlex.events
-    val trillFlexEvent: Flow<TrillFlexEvent> = _trillFlexEvent
-    private val _sensorData: MutableStateFlow<RawSensorData> = _trillFlex.sensorData
-    val sensorData: Flow<RawSensorData> = _sensorData
+    private val _trillFlexEvent = _trillFlex.events
+    val trillFlexEvent: Flow<TrillFlexEvent> = _trillFlexEvent.filter { it is Scroll }
+
+    val contactList = ContactRepo.getContactsSeparatedByFirstLetter()
 
     init {
         _sensorDataReceiver.addObserver(_trillFlex)

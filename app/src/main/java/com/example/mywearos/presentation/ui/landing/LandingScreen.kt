@@ -17,14 +17,13 @@ import com.example.mywearos.presentation.ui.util.ReportFullyDrawn
 
 @Composable
 fun LandingScreen(
-    scalingLazyListState: ScalingLazyListState,
     onClickRawSensorData: () -> Unit,
     onClickAddressBook: () -> Unit,
+    onClickMusicPlayer: () -> Unit,
     modifier: Modifier = Modifier
 ){
     Box(modifier = modifier.fillMaxSize()){
         ScalingLazyColumn(
-            state = scalingLazyListState,
             autoCentering = AutoCenteringParams(itemIndex = 0)
         ){
             item{
@@ -34,6 +33,10 @@ fun LandingScreen(
 
             item{
                 MenuChip(R.string.address_book_button_label, onClickAddressBook)
+            }
+
+            item {
+                MenuChip(R.string.music_player_button_label, onClickMusicPlayer)
             }
         }
     }

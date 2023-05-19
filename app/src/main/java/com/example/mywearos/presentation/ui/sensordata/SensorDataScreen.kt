@@ -1,22 +1,41 @@
 package com.example.mywearos.presentation.ui.sensordata
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.material.Text
+import com.example.mywearos.data.sensor.NoEvent
+import com.example.mywearos.data.sensor.RawSensorData
+import com.example.mywearos.data.sensor.TrillFlexEvent
 
 
 @Composable
 fun RawSensorDataScreen(
-    sensorDataViewModel: SensorDataViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    sensorDataViewModel: SensorDataViewModel = viewModel()
+){
+    val latestEvent by sensorDataViewModel.trillFlexEvent.collectAsStateWithLifecycle(NoEvent())
+    val latestSensorData by sensorDataViewModel.sensorData.collectAsStateWithLifecycle(RawSensorData(emptyList()))
+    RawSensorDataScreen(modifier, latestEvent, latestSensorData)
+}
+
+
+@Composable
+private fun RawSensorDataScreen(
+    modifier: Modifier = Modifier,
+    latestEvent: TrillFlexEvent,
+    latestSensorData: RawSensorData?
 ) {
-    val sensorData = remember { sensorDataViewModel.allSensorData }
-    val latestEvent = remember { sensorDataViewModel.latestEvent }
     Box(
         modifier = Modifier.fillMaxSize()
     ){
@@ -28,9 +47,9 @@ fun RawSensorDataScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Text(text = "Event: ${latestEvent}", modifier = Modifier.align(CenterHorizontally))
-            if(sensorData.isNotEmpty()){
-                for (locationWithSize in sensorData.last().locationsWithSize) {
-                    Text(text = "Location: ${locationWithSize.first}, Size: ${locationWithSize.second}", modifier = Modifier.align(CenterHorizontally))
+            if(latestSensorData != null){
+                for (data in latestSensorData.locationsWithSize) {
+                    Text(text = "Location: ${data.first}, Size: ${data.second}", modifier = Modifier.align(CenterHorizontally))
                 }
             }
         }
