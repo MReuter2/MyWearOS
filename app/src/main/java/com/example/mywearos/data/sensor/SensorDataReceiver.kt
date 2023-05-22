@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothSocket
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.io.InputStream
@@ -19,7 +20,7 @@ class SensorDataReceiver{
     private var isBluetoothConnected = false
     private val deviceAddress = "B4:E6:2D:EB:03:2B"
 
-    fun connect(): Boolean{
+    private fun connect(): Boolean{
         val device = bluetoothAdapter.getRemoteDevice(deviceAddress)
         val uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
 
@@ -37,7 +38,7 @@ class SensorDataReceiver{
         return isBluetoothConnected
     }
 
-    fun disconnect(){
+    private fun disconnect(){
         if (isBluetoothConnected) {
             bluetoothSocket?.close()
         }
@@ -45,13 +46,22 @@ class SensorDataReceiver{
 
     fun waitForData(coroutineScope: CoroutineScope, action: (String) -> Unit){
         coroutineScope.launch(Dispatchers.IO) {
-            if(isBluetoothConnected){
-                val newData = inputStream.use { it?.bufferedReader()?.readLine() }
-                if (newData != null) {
-                    receivedData.add(newData)
-                    action(newData)
-                    Log.d("DATA", newData)
+            if(connect()){
+                while(isActive && isBluetoothConnected){
+                    try{
+                        val newData = inputStream?.bufferedReader()?.readLine()
+                        if (newData != null) {
+                            receivedData.add(newData)
+                            action(newData)
+                            Log.d("DATA", newData)
+                        }
+                    }catch(_: IOException){
+                        Log.d("DATA", "Throws IOException while reading.")
+                    }
                 }
+                disconnect()
+            }else{
+                Log.d("BLUETOOTH", "Bluetooth connection failed! Unable to read sensor data!")
             }
         }
     }
