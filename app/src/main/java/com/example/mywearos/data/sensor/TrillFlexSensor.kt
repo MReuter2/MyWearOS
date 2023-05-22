@@ -4,7 +4,7 @@ import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.math.absoluteValue
 
-class TrillFlexSensor: SensorDataReceiverObserver {
+class TrillFlexSensor {
     val events: MutableStateFlow<TrillFlexEvent> = MutableStateFlow(NoEvent())
     private val allEvents = mutableListOf<TrillFlexEvent>(NoEvent())
     val sensorData: MutableStateFlow<RawSensorData> = MutableStateFlow(RawSensorData(emptyList()))
@@ -13,18 +13,18 @@ class TrillFlexSensor: SensorDataReceiverObserver {
         var newEvent: TrillFlexEvent = NoEvent()
         val latestSensorData = sensorData.value
 
-        val locationDifferencesBetweenNewAndOldSensorData =
-            getLocationDifferencesBetweenRawSensorData(latestSensorData, newSensorData)
-        val actionDirection = if(locationDifferencesBetweenNewAndOldSensorData.first() < 0)
+        val latestLocationDifferences =
+                latestSensorData.getDifferenceBetweenOtherData(newSensorData)
+        val actionDirection = if(latestLocationDifferences.first() < 0)
                 ActionDirection.POSITIVE else ActionDirection.NEGATIVE
-        val pace = locationDifferencesBetweenNewAndOldSensorData.first().absoluteValue
+        val pace = latestLocationDifferences.first().absoluteValue
         val numberOfFingers = latestSensorData.size
         when {
             pace < 4 -> {
-                if(allEvents.last() !is Scroll) {
-                    newEvent = Touch(numberOfFingers)
+                newEvent = if(allEvents.last() !is Scroll) {
+                    Touch(numberOfFingers)
                 }else{
-                    newEvent = Scroll(actionDirection, pace, numberOfFingers)
+                    Scroll(actionDirection, pace, numberOfFingers)
                 }
             }
             pace > 4 -> {
@@ -40,25 +40,7 @@ class TrillFlexSensor: SensorDataReceiverObserver {
         return newEvent
     }
 
-    private fun getLocationDifferencesBetweenRawSensorData(
-        rawSensorDataA: RawSensorData, rawSensorDataB: RawSensorData): List<Int>{
-        val differences = mutableListOf<Int>()
-        val locationsAndSizesA = rawSensorDataA.locationsWithSize
-        val locationsAndSizesB = rawSensorDataB.locationsWithSize
-        val maxIndex = if(locationsAndSizesA.size <= locationsAndSizesB.size) locationsAndSizesA.size else locationsAndSizesB.size
-        locationsAndSizesA.forEachIndexed { index, locationA ->
-            if(maxIndex > index){
-                val locationB = locationsAndSizesB[index]
-                differences.add(locationA.first - locationB.first)
-            }
-        }
-        if(differences.isEmpty())
-            differences.add(0)
-
-        return differences
-    }
-
-    override fun update(newSensorData: String) {
+    fun update(newSensorData: String) {
         val rawSensorData = stringToRawSensorData(newSensorData.substringAfter("[").substringBefore("]"))
         val newEvent = identifyNewEventWithSensorData(rawSensorData)
         Log.d("EVENT", newEvent.toString())
@@ -71,4 +53,37 @@ class TrillFlexSensor: SensorDataReceiverObserver {
 data class RawSensorData(val locationsWithSize: List<Pair<Int, Int>>){
     val size: Int
         get() = locationsWithSize.size
+
+    fun getDifferenceBetweenOtherData(
+        otherSensorData: RawSensorData): List<Int>{
+        val differences = mutableListOf<Int>()
+        val otherLocationAndSize = otherSensorData.locationsWithSize
+        val maxIndex = if(this.size <= otherLocationAndSize.size) this.size else otherLocationAndSize.size
+        locationsWithSize.forEachIndexed { index, locationA ->
+            if(maxIndex > index){
+                val locationB = otherLocationAndSize[index]
+                differences.add(locationA.first - locationB.first)
+            }
+        }
+        if(differences.isEmpty())
+            differences.add(0)
+
+        return differences
+    }
+}
+
+fun stringToRawSensorData(string: String): RawSensorData{
+    val array = string.split(" , ")
+    val locationsWithSize = mutableListOf<Pair<Int,Int>>()
+    for(element in array){
+        val arraySplitByLocationAndSize = string.split(",")
+        val locationString = arraySplitByLocationAndSize.first().removePrefix("{location:").trim()
+        val sizeString = arraySplitByLocationAndSize.last().trim().removePrefix("size: ").removeSuffix("}").trim()
+        val location = locationString.toIntOrNull()
+        val size = sizeString.toIntOrNull()
+        if(location != null && size != null){
+            locationsWithSize.add(Pair(location, size))
+        }
+    }
+    return RawSensorData(locationsWithSize)
 }

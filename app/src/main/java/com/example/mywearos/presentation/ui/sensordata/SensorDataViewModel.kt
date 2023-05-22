@@ -1,12 +1,16 @@
 package com.example.mywearos.presentation.ui.sensordata
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.mywearos.data.sensor.RawSensorData
 import com.example.mywearos.data.sensor.SensorDataReceiver
 import com.example.mywearos.data.sensor.TrillFlexEvent
 import com.example.mywearos.data.sensor.TrillFlexSensor
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 class SensorDataViewModel: ViewModel() {
     private val _sensorDataReceiver = SensorDataReceiver()
@@ -17,11 +21,12 @@ class SensorDataViewModel: ViewModel() {
     val sensorData: Flow<RawSensorData> = _sensorData
 
     init {
-        _sensorDataReceiver.addObserver(_trillFlex)
-    }
-
-    override fun onCleared() {
-        _sensorDataReceiver.stopWaitingForData()
-        super.onCleared()
+        viewModelScope.launch(Dispatchers.IO){
+            _sensorDataReceiver.connect()
+            while(isActive){
+                _sensorDataReceiver.waitForData(this) { _trillFlex.update(it) }
+            }
+            _sensorDataReceiver.disconnect()
+        }
     }
 }

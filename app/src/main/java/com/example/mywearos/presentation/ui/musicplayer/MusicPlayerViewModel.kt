@@ -1,14 +1,18 @@
 package com.example.mywearos.presentation.ui.musicplayer
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.mywearos.data.music.songs
 import com.example.mywearos.data.sensor.Scroll
 import com.example.mywearos.data.sensor.SensorDataReceiver
 import com.example.mywearos.data.sensor.Swipe
 import com.example.mywearos.data.sensor.TrillFlexEvent
 import com.example.mywearos.data.sensor.TrillFlexSensor
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 class MusicPlayerViewModel: ViewModel() {
     private val _sensorDataReceiver = SensorDataReceiver()
@@ -19,11 +23,13 @@ class MusicPlayerViewModel: ViewModel() {
     val songList = songs
 
     init{
-        _sensorDataReceiver.addObserver(_trillFlex)
+        viewModelScope.launch(Dispatchers.IO){
+            _sensorDataReceiver.connect()
+            while(isActive){
+                _sensorDataReceiver.waitForData(this) { _trillFlex.update(it) }
+            }
+            _sensorDataReceiver.disconnect()
+        }
     }
 
-    override fun onCleared() {
-        _sensorDataReceiver.stopWaitingForData()
-        super.onCleared()
-    }
 }

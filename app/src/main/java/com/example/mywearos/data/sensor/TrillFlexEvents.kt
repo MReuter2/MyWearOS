@@ -12,7 +12,7 @@ class Touch(override val numberOfFingers: Int): TrillFlexEvent{
 }
 
 //Pace: 0-1f
-class Scroll(val direction: ActionDirection, var pace: Int, override val numberOfFingers: Int): TrillFlexEvent{
+class Scroll(val direction: ActionDirection, val pace: Int, override val numberOfFingers: Int): TrillFlexEvent{
     override fun toString(): String {
         return "Scroll, Fingers: $numberOfFingers, Pace: $pace"
     }
