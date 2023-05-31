@@ -14,9 +14,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.material.Text
-import com.example.mywearos.data.sensor.NoEvent
-import com.example.mywearos.data.sensor.RawSensorData
-import com.example.mywearos.data.sensor.TrillFlexEvent
+import com.example.mywearos.data.SensorData
+import com.example.mywearos.data.NoEvent
+import com.example.mywearos.data.TrillFlexEvent
 
 
 @Composable
@@ -25,7 +25,7 @@ fun RawSensorDataScreen(
     sensorDataViewModel: SensorDataViewModel = viewModel()
 ){
     val latestEvent by sensorDataViewModel.trillFlexEvent.collectAsStateWithLifecycle(NoEvent())
-    val latestSensorData by sensorDataViewModel.sensorData.collectAsStateWithLifecycle(RawSensorData(emptyList()))
+    val latestSensorData by sensorDataViewModel.sensorData.collectAsStateWithLifecycle(SensorData(emptyList()))
     RawSensorDataScreen(modifier, latestEvent, latestSensorData)
 }
 
@@ -34,7 +34,7 @@ fun RawSensorDataScreen(
 private fun RawSensorDataScreen(
     modifier: Modifier = Modifier,
     latestEvent: TrillFlexEvent,
-    latestSensorData: RawSensorData?
+    latestSensorData: SensorData
 ) {
     Box(
         modifier = Modifier.fillMaxSize()
@@ -46,11 +46,9 @@ private fun RawSensorDataScreen(
                 .align(Alignment.Center),
             verticalArrangement = Arrangement.Center
         ) {
-            Text(text = "Event: ${latestEvent}", modifier = Modifier.align(CenterHorizontally))
-            if(latestSensorData != null){
-                for (data in latestSensorData.locationsWithSize) {
-                    Text(text = "Location: ${data.first}, Size: ${data.second}", modifier = Modifier.align(CenterHorizontally))
-                }
+            Text(text = "Event: $latestEvent", modifier = Modifier.align(CenterHorizontally))
+            for (data in latestSensorData.locationsWithSize) {
+                Text(text = "Location: ${data.first}, Size: ${data.second}", modifier = Modifier.align(CenterHorizontally))
             }
         }
     }

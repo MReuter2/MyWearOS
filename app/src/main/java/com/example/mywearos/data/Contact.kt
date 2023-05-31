@@ -3,25 +3,19 @@ package com.example.mywearos.data
 data class Contact(val firstname: String, val lastname: String, val number: String? = null)
 
 object ContactRepo{
-    fun getContacts() = contacts.sortedBy { it.lastname  }
+    fun getContactsSeparatedByFirstLetter() = contacts.getSeparatedByFirstLetter()
+}
 
-    fun getContactsSeparatedByFirstLetter(): List<List<Contact>>{
-        val allContactsSortedByLastname = contacts.sortedBy { it.lastname  }
-        val seperatedContacts = mutableListOf<List<Contact>>()
-        var currentLetterGroup = mutableListOf<Contact>()
-        for(contact in allContactsSortedByLastname){
-            if(currentLetterGroup.isEmpty()){
-                currentLetterGroup.add(contact)
-            }else
-                if(currentLetterGroup.first().lastname[0] == contact.lastname[0]){
-                    currentLetterGroup.add(contact)
-                }else{
-                    seperatedContacts.add(currentLetterGroup)
-                    currentLetterGroup = mutableListOf<Contact>(contact)
-                }
+fun List<Contact>.getSeparatedByFirstLetter(): List<Pair<Char, List<Contact>>>{
+    val startingLetters = this.sortedBy { it.lastname }.map { it.lastname.first() }.distinct()
+    val contactsSeparatedByFirstLetter: MutableList<Pair<Char, List<Contact>>> = mutableListOf()
+    startingLetters.forEach { letter ->
+        val filteredContactsByLetter = this.filter {
+            it.lastname.startsWith(letter)
         }
-        return seperatedContacts
+        contactsSeparatedByFirstLetter.add(Pair(letter, filteredContactsByLetter))
     }
+    return contactsSeparatedByFirstLetter
 }
 
 private val contacts = listOf(

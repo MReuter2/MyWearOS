@@ -1,6 +1,12 @@
-package com.example.mywearos.data.music
+package com.example.mywearos.data
 
 data class Song(val title: String, val artist: String, val duration: Int)
+
+data class SongPlayback(val song: Song, var progress: Int, var playbackState: PlaybackState)
+
+enum class PlaybackState{
+    RUNNING, STOPPED;
+}
 
 val songs = listOf(
     Song("Stairway to Heaven", "Led Zeppelin", 482),

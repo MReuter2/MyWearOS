@@ -33,9 +33,9 @@ import androidx.wear.compose.material.itemsIndexed
 import androidx.wear.compose.material.rememberScalingLazyListState
 import com.example.mywearos.data.Contact
 import com.example.mywearos.data.ContactRepo
-import com.example.mywearos.data.sensor.ActionDirection
-import com.example.mywearos.data.sensor.NoEvent
-import com.example.mywearos.data.sensor.Scroll
+import com.example.mywearos.data.ActionDirection
+import com.example.mywearos.data.NoEvent
+import com.example.mywearos.data.Scroll
 import com.example.mywearos.presentation.theme.MyWearOSTheme
 
 @Composable
@@ -43,22 +43,24 @@ fun ContactListScreen(
     modifier: Modifier = Modifier,
     contactListViewModel: ContactListViewModel = viewModel()
 ){
-    val contactsSeparatedByLetter = contactListViewModel.contactList
+    val separatedContact = contactListViewModel.contactList
     val latestEvent by contactListViewModel.trillFlexEvent.collectAsStateWithLifecycle(NoEvent())
     val listState = rememberScalingLazyListState(0, 0)
 
+    //TODO: Scroll animation as separate Composable
+    //TODO: Move event handling to viewmodel
     LaunchedEffect(latestEvent){
         if(latestEvent is Scroll) {
             when(latestEvent.numberOfFingers){
                 1 -> {
-                    if((latestEvent as Scroll).direction == ActionDirection.POSITIVE) {
+                    if(latestEvent.actionDirection == ActionDirection.POSITIVE) {
                         latestEvent.let { listState.scrollBy((it as Scroll).pace.toFloat()) }
                     }else{
                         latestEvent.let { listState.scrollBy((it as Scroll).pace.toFloat().unaryMinus()) }
                     }
                 }
                 2 -> {
-                    if((latestEvent as Scroll).direction == ActionDirection.POSITIVE){
+                    if(latestEvent.actionDirection == ActionDirection.POSITIVE){
                         listState.scrollToItem(listState.centerItemIndex + 1, 0)
                     }else{
                         listState.scrollToItem(listState.centerItemIndex - 1, 0)
@@ -69,7 +71,7 @@ fun ContactListScreen(
     }
     ContactListScreen(
         modifier,
-        contactsSeparatedByLetter,
+        separatedContact,
         listState
     )
 }
@@ -77,7 +79,7 @@ fun ContactListScreen(
 @Composable
 private fun ContactListScreen(
     modifier: Modifier = Modifier,
-    contactsSeparatedByLetter: List<List<Contact>>,
+    contactsSeparatedByLetter: List<Pair<Char, List<Contact>>>,
     listState: ScalingLazyListState = rememberScalingLazyListState()
 ){
     Box(modifier = modifier.fillMaxSize()){
@@ -95,13 +97,12 @@ private fun ContactListScreen(
 }
 
 @Composable
-fun ContactGroup(contacts: List<Contact>, modifier: Modifier = Modifier){
-    val sortedContacts = contacts.sortedBy { it.lastname  }
+fun ContactGroup(contacts: Pair<Char, List<Contact>>, modifier: Modifier = Modifier){
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = sortedContacts.first().lastname[0].toString(),
+            text = contacts.first.toString(),
             style = MaterialTheme.typography.title3,
             modifier = Modifier.padding(10.dp)
         )
@@ -115,7 +116,7 @@ fun ContactGroup(contacts: List<Contact>, modifier: Modifier = Modifier){
             modifier = modifier
         ) {
             Column {
-                sortedContacts.forEachIndexed { index, contact ->
+                contacts.second.forEachIndexed { index, contact ->
                     if(index != 0)
                         Divider(
                             thickness = 1.dp,
@@ -155,7 +156,16 @@ fun LetterIcon(letter: String, modifier: Modifier = Modifier){
             .clip(CircleShape)
             .background(MaterialTheme.colors.primaryVariant)
     ){
-        Text(letter, style = MaterialTheme.typography.title1)
+        Text(text = letter, style = MaterialTheme.typography.title1)
+    }
+}
+
+@Preview("ContactList", showBackground = true, device = "spec:width=220dp,height=891dp")
+@Composable
+private fun ContactListPreview(){
+    val contactsSeparatedByLetter = ContactRepo.getContactsSeparatedByFirstLetter()
+    MyWearOSTheme {
+        ContactListScreen(contactsSeparatedByLetter = contactsSeparatedByLetter)
     }
 }
 
@@ -167,10 +177,17 @@ private fun ContactGroupPreview(){
     }
 }
 
-@Preview(showBackground = true)
+@Preview("ContactRow", showBackground = true, device = "spec:width=220dp,height=891dp")
 @Composable
-fun ContactRowPreview(){
+private fun ContactRowPreview(){
     MyWearOSTheme {
         ContactRow(contact = Contact("Max", "Mustermann"))
     }
+}
+
+@Preview("LetterIcon", showBackground = true, device = "spec:width=220dp,height=891dp")
+@Composable
+private fun LetterIcon(){
+    val exampleLetter = "A"
+    LetterIcon(exampleLetter)
 }
