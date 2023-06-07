@@ -14,7 +14,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -29,82 +28,39 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.material.MaterialTheme
+import androidx.wear.compose.material.MaterialTheme.colors
 import androidx.wear.compose.material.Text
 import com.example.mywearos.R
-import com.example.mywearos.data.ActionDirection
-import com.example.mywearos.data.NoEvent
 import com.example.mywearos.data.PlaybackState
-import com.example.mywearos.data.Scroll
-import com.example.mywearos.data.SongPlayback
-import com.example.mywearos.data.Swipe
+import com.example.mywearos.data.Song
 import com.example.mywearos.data.songs
+import com.example.mywearos.model.format
 import com.example.mywearos.presentation.theme.MyWearOSTheme
-import kotlinx.coroutines.delay
-import kotlin.math.roundToInt
-import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun SongScreen(
     musicPlayerViewModel: MusicPlayerViewModel = viewModel()
 ){
     val songs = musicPlayerViewModel.songList
-    val currentSongPlayback by musicPlayerViewModel.currentSongPlayback.observeAsState()
-    val latestEvent by musicPlayerViewModel.trillFlexEvent.collectAsStateWithLifecycle(initialValue = NoEvent())
-    var currentSong by remember { mutableStateOf(songs.first()) }
-    var songIsRunning by remember{ mutableStateOf(false) }
-    var currentTime by remember{ mutableStateOf(0) }
+    val currentSong by musicPlayerViewModel.song.observeAsState(songs.first())
+    val currentTime by musicPlayerViewModel.currentTime.collectAsStateWithLifecycle(initialValue = 0)
+    val currentPlaybackState by musicPlayerViewModel.playbackState.observeAsState(PlaybackState.PAUSED)
 
-    //TODO: Time calculation is model code and not UI code
-    //TODO: Events as separate Composable
-    //TODO: Move to Viewmodel
-    LaunchedEffect(latestEvent){
-        when(latestEvent){
-            is Swipe ->{
-                currentSong = songs.get(songs.indexOf(currentSong) + 1)
-                currentTime = 0
-            }
-            is Scroll ->{
-                val timeToSkip =
-                    if(latestEvent.actionDirection == ActionDirection.POSITIVE)
-                        ((latestEvent as Scroll).pace.toFloat() / 10).roundToInt()
-                    else
-                        (latestEvent as Scroll).pace / -10
-                if(timeToSkip + currentTime >= 0 && timeToSkip + currentTime <= currentSong.duration) {
-                    currentTime += timeToSkip
-                }else
-                    if(timeToSkip + currentTime < 0){
-                        currentTime = 0
-                    }else{
-                        currentTime = currentSong.duration
-                    }
-            }
-            else -> {}
-        }
-    }
-    //TODO: Modelcode
-    LaunchedEffect(songIsRunning) {
-        while(songIsRunning) {
-            delay(1.seconds)
-            currentTime += 1
-            if(currentTime == currentSong.duration) {
-                currentTime = 0
-                currentSong = songs.get(songs.indexOf(currentSong) + 1)
-            }
-        }
-    }
-    if(currentSongPlayback != null){
-        SongScreen(
-            currentSongPlayback = currentSongPlayback!!,
-            onClickPlayStop = { musicPlayerViewModel.playStopSong() },
-            onClickSkipNext = { musicPlayerViewModel.skipNextSong() },
-            onClickSkipPrevious = { musicPlayerViewModel.skipPreviousSong() }
-        )
-    }
+    SongScreen(
+        song = currentSong,
+        playbackState = currentPlaybackState,
+        progress = currentTime,
+        onClickPlayStop = { musicPlayerViewModel.playStopSong() },
+        onClickSkipNext = { musicPlayerViewModel.skipNextSong() },
+        onClickSkipPrevious = { musicPlayerViewModel.skipPreviousSong() }
+    )
 }
 
 @Composable
 fun SongScreen(
-    currentSongPlayback: SongPlayback,
+    song: Song,
+    playbackState: PlaybackState,
+    progress: Int,
     onClickPlayStop: () -> Unit,
     onClickSkipPrevious: () -> Unit,
     onClickSkipNext: () -> Unit
@@ -118,17 +74,16 @@ fun SongScreen(
                 .padding(horizontal = 10.dp)
         ) {
             SongInfo(
-                songTitle = currentSongPlayback.song.title,
-                artist = currentSongPlayback.song.artist
+                songTitle = song.title,
+                artist = song.artist
             )
             Spacer(modifier = Modifier.size(10.dp))
             SongProgress(
-                duration = currentSongPlayback.song.duration,
-                progress = currentSongPlayback.progress
+                duration = song.duration,
+                progress = progress
             )
-            //TODO: Pass events to viewmodel
             StopPlayIcon(
-                playbackState = currentSongPlayback.playbackState,
+                playbackState = playbackState,
                 onClickPlayStop = { onClickPlayStop() },
                 onClickSkipPrevious = { onClickSkipPrevious() },
                 onClickSkipNext = { onClickSkipNext() }
@@ -157,20 +112,20 @@ fun StopPlayIcon(
             Icon(painter = painterResource(
                 id = R.drawable.baseline_skip_previous_24),
                 contentDescription = null,
-                tint = MaterialTheme.colors.onPrimary)
+                tint = colors.onPrimary)
         }
         IconButton(onClick = { onClickPlayStop() }) {
             Icon(painter = painterResource(id =
                     if (playbackState == PlaybackState.RUNNING) R.drawable.baseline_pause_24
                         else R.drawable.baseline_play_arrow_24),
                 contentDescription = null,
-                tint = MaterialTheme.colors.onPrimary)
+                tint = colors.onPrimary)
         }
         IconButton(onClick = { onClickSkipNext() }) {
             Icon(painter = painterResource(
                 id = R.drawable.baseline_skip_next_24),
                 contentDescription = null,
-                tint = MaterialTheme.colors.onPrimary)
+                tint = colors.onPrimary)
         }
     }
 }
@@ -183,8 +138,9 @@ fun StopPlayIconPreview(){
         playbackState = playbackState,
         onClickPlayStop = {
             playbackState = when(playbackState){
-                PlaybackState.RUNNING -> PlaybackState.STOPPED
-                PlaybackState.STOPPED -> PlaybackState.RUNNING
+                PlaybackState.RUNNING -> PlaybackState.PAUSED
+                PlaybackState.PAUSED -> PlaybackState.RUNNING
+                PlaybackState.INITIAL -> PlaybackState.RUNNING
             }
         }
     )
@@ -215,14 +171,6 @@ fun SongInfoPreview(){
 @Composable
 fun SongProgress(duration: Int, progress: Int){
     val progressPercentage = progress.toFloat()/duration.toFloat()
-    val durationMins = duration / 60
-    val durationSecs =
-        if(duration - durationMins * 60 < 10) "0${duration - durationMins * 60}"
-            else "${duration - durationMins * 60}"
-    val restTimeMins = progress / 60
-    val restTimeSecs =
-        if(progress - restTimeMins * 60 < 10) "0${progress - restTimeMins * 60}"
-            else "${progress - restTimeMins * 60}"
     Column(
         modifier = Modifier.width(150.dp)
     ) {
@@ -231,8 +179,8 @@ fun SongProgress(duration: Int, progress: Int){
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = "${restTimeMins}:${restTimeSecs}")
-            Text(text = "${durationMins}:${durationSecs}")
+            Text(text = progress.format())
+            Text(text =duration.format())
         }
     }
 }

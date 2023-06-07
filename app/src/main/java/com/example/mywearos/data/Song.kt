@@ -2,10 +2,8 @@ package com.example.mywearos.data
 
 data class Song(val title: String, val artist: String, val duration: Int)
 
-data class SongPlayback(val song: Song, var progress: Int, var playbackState: PlaybackState)
-
 enum class PlaybackState{
-    RUNNING, STOPPED;
+    RUNNING, PAUSED, INITIAL;
 }
 
 val songs = listOf(

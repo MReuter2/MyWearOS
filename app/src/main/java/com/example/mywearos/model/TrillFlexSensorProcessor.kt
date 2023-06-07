@@ -8,37 +8,27 @@ import com.example.mywearos.data.Swipe
 import com.example.mywearos.data.Touch
 import com.example.mywearos.data.TrillFlexEvent
 import com.example.mywearos.data.toSensorData
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.util.UUID
-import kotlin.math.absoluteValue
 
 class TrillFlexSensorProcessor {
     private val bluetoothReceiver = BluetoothReceiver(
         "B4:E6:2D:EB:03:2B",
         UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
     )
-    private val allSensorData = mutableListOf<SensorData>()
-    //TODO implement sensorDataWithEvent
-    val sensorData = bluetoothReceiver.receiveData()?.map {
+    private var prevSensorDataWithEvent: Pair<SensorData, TrillFlexEvent> = Pair(SensorData(emptyList()), NoEvent())
+    val sensorDataWithEvent: Flow<Pair<SensorData, TrillFlexEvent>> = bluetoothReceiver.receiveData().map {
         val sensorData = it.toSensorData()
-        //TODO Remove side effect
-        allSensorData.add(sensorData)
-        sensorData
-    }
-    private val allEvents = mutableListOf<TrillFlexEvent>(NoEvent())
-    val getEvents = sensorData?.map {
-        val event = identifyNewEvent(it)
-        //TODO Remove side effect
-        allEvents.add(event)
-        event
+        val event = identifyNewEvent(sensorData, prevSensorDataWithEvent)
+        prevSensorDataWithEvent = Pair(sensorData, event)
+        Pair(sensorData, event)
     }
 
-    private fun identifyNewEvent(sensorData: SensorData): TrillFlexEvent {
+    private fun identifyNewEvent(newSensorData: SensorData,
+                                         prevSensorDataWithEvent: Pair<SensorData, TrillFlexEvent>): TrillFlexEvent {
         val locationDifferenceToPreviousData =
-            if(allSensorData.size > 1)
-                sensorData.getDifferenceBetweenOtherData(allSensorData.get(allSensorData.lastIndex - 1))
-            else
-                emptyList()
+                newSensorData.getDifferenceBetweenOtherData(prevSensorDataWithEvent.first)
         val actionDirection =
             if (locationDifferenceToPreviousData.isEmpty() || locationDifferenceToPreviousData.first() == 0)
                 ActionDirection.NEUTRAL
@@ -48,11 +38,11 @@ class TrillFlexSensorProcessor {
                 ActionDirection.POSITIVE
         val pace =
             if(locationDifferenceToPreviousData.isNotEmpty())
-                locationDifferenceToPreviousData.first().absoluteValue
+                locationDifferenceToPreviousData.first()
             else
                 0
 
-        when(val numberOfFingers = sensorData.size){
+        when(val numberOfFingers = newSensorData.size){
             0 -> return NoEvent()
             1 -> {
                 if(pace == 0)

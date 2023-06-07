@@ -18,7 +18,7 @@ import com.example.mywearos.presentation.ui.sensordata.RawSensorDataScreen
 @Composable
 fun WearApp(
     modifier: Modifier = Modifier,
-    swipeDissmissableNavController: NavHostController = rememberSwipeDismissableNavController()
+    swipeDismissibleNavController: NavHostController = rememberSwipeDismissableNavController()
 ){
     MyWearOSTheme {
         Scaffold(
@@ -28,7 +28,7 @@ fun WearApp(
             }
         ){
             SwipeDismissableNavHost(
-                navController = swipeDissmissableNavController,
+                navController = swipeDismissibleNavController,
                 startDestination = Screen.Landing.route,
                 modifier = Modifier.background(MaterialTheme.colors.background)
             ){
@@ -36,9 +36,9 @@ fun WearApp(
                    route = Screen.Landing.route
                 ){
                    LandingScreen(
-                       onClickRawSensorData = { swipeDissmissableNavController.navigate(Screen.RawSensorData.route) },
-                       onClickAddressBook = { swipeDissmissableNavController.navigate(Screen.AddressBook.route) },
-                       onClickMusicPlayer = { swipeDissmissableNavController.navigate(Screen.MusicPlayer.route) }
+                       onClickRawSensorData = { swipeDismissibleNavController.navigate(Screen.RawSensorData.route) },
+                       onClickAddressBook = { swipeDismissibleNavController.navigate(Screen.AddressBook.route) },
+                       onClickMusicPlayer = { swipeDismissibleNavController.navigate(Screen.MusicPlayer.route) }
                    )
                 }
 

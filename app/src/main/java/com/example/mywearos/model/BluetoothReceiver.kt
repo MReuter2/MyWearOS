@@ -2,10 +2,10 @@ package com.example.mywearos.model
 
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothSocket
-import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.isActive
@@ -15,8 +15,8 @@ import java.util.UUID
 
 class BluetoothReceiver(private val addr: String, private val uuid: UUID) {
 
-    fun receiveData(): Flow<String>? {
-        val socket = connect() ?: return null
+    fun receiveData(): Flow<String> {
+        val socket = connect() ?: return emptyFlow()
         var isActive = true
         return flow {
             val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
@@ -28,9 +28,11 @@ class BluetoothReceiver(private val addr: String, private val uuid: UUID) {
                     }catch (_:IOException){}
                     bytes
                 }
-                if (bytesRead < 0) break
-                Log.d("DATA", buffer.copyOf(bytesRead).decodeToString())
-                emit(buffer.copyOf(bytesRead).decodeToString())
+                if (bytesRead <= 0) break
+                val dataString = buffer.copyOf(bytesRead).decodeToString()
+                if(dataString.trim() != ""){
+                    emit(dataString)
+                }
             }
         }.onCompletion {
             isActive = false

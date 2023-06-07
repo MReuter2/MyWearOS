@@ -24,17 +24,21 @@ fun RawSensorDataScreen(
     modifier: Modifier = Modifier,
     sensorDataViewModel: SensorDataViewModel = viewModel()
 ){
-    val latestEvent by sensorDataViewModel.trillFlexEvent.collectAsStateWithLifecycle(NoEvent())
-    val latestSensorData by sensorDataViewModel.sensorData.collectAsStateWithLifecycle(SensorData(emptyList()))
-    RawSensorDataScreen(modifier, latestEvent, latestSensorData)
+    val sensorDataWithEvent by sensorDataViewModel.sensorDataWithEvent.collectAsStateWithLifecycle(
+        initialValue = Pair(SensorData(emptyList()), NoEvent())
+    )
+
+    RawSensorDataScreen(
+        modifier = modifier,
+        sensorDataWithEvent = sensorDataWithEvent
+    )
 }
 
 
 @Composable
 private fun RawSensorDataScreen(
     modifier: Modifier = Modifier,
-    latestEvent: TrillFlexEvent,
-    latestSensorData: SensorData
+    sensorDataWithEvent: Pair<SensorData, TrillFlexEvent>
 ) {
     Box(
         modifier = Modifier.fillMaxSize()
@@ -46,8 +50,8 @@ private fun RawSensorDataScreen(
                 .align(Alignment.Center),
             verticalArrangement = Arrangement.Center
         ) {
-            Text(text = "Event: $latestEvent", modifier = Modifier.align(CenterHorizontally))
-            for (data in latestSensorData.locationsWithSize) {
+            Text(text = "Event: ${sensorDataWithEvent.second}", modifier = Modifier.align(CenterHorizontally))
+            for (data in sensorDataWithEvent.first.locationsWithSize) {
                 Text(text = "Location: ${data.first}, Size: ${data.second}", modifier = Modifier.align(CenterHorizontally))
             }
         }
