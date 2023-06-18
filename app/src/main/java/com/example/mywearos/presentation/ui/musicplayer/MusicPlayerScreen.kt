@@ -44,7 +44,7 @@ fun SongScreen(
     val songs = musicPlayerViewModel.songList
     val currentSong by musicPlayerViewModel.song.observeAsState(songs.first())
     val currentTime by musicPlayerViewModel.currentTime.collectAsStateWithLifecycle(initialValue = 0)
-    val currentPlaybackState by musicPlayerViewModel.playbackState.observeAsState(PlaybackState.PAUSED)
+    val currentPlaybackState by musicPlayerViewModel.playbackState.observeAsState(PlaybackState.INITIAL)
 
     SongScreen(
         song = currentSong,
