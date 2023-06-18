@@ -9,7 +9,7 @@ import kotlinx.coroutines.withContext
 
 class SongPlayback(private val songs: List<Song>) {
     val currentSong = MutableLiveData(songs.first())
-    private var _timer = Timer()
+    private val _timer = Timer()
     val currentTime: StateFlow<Int> = _timer.time
     val playbackState = MutableLiveData(PlaybackState.INITIAL)
 

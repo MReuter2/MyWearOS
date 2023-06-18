@@ -1,7 +1,7 @@
-package com.example.mywearos.presentation.ui.contactlist
+﻿package com.example.mywearos.presentation.ui.contactlist
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,6 +14,7 @@ import androidx.compose.material3.Divider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,7 +23,6 @@ import androidx.compose.ui.graphics.painter.BrushPainter
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.material.Card
 import androidx.wear.compose.material.MaterialTheme
@@ -33,8 +33,6 @@ import androidx.wear.compose.material.itemsIndexed
 import androidx.wear.compose.material.rememberScalingLazyListState
 import com.example.mywearos.data.Contact
 import com.example.mywearos.data.ContactRepo
-import com.example.mywearos.data.ActionDirection
-import com.example.mywearos.data.NoEvent
 import com.example.mywearos.data.Scroll
 import com.example.mywearos.presentation.theme.MyWearOSTheme
 
@@ -43,37 +41,34 @@ fun ContactListScreen(
     modifier: Modifier = Modifier,
     contactListViewModel: ContactListViewModel = viewModel()
 ){
-    val separatedContact = contactListViewModel.contactList
-    val latestEvent by contactListViewModel.trillFlexEvent.collectAsStateWithLifecycle(NoEvent())
+    val contacts = contactListViewModel.contactList
     val listState = rememberScalingLazyListState(0, 0)
-
-    //TODO: Scroll animation as separate Composable
-    //TODO: Move event handling to viewmodel
-    LaunchedEffect(latestEvent){
-        if(latestEvent is Scroll) {
-            when(latestEvent.numberOfFingers){
-                1 -> {
-                    if(latestEvent.actionDirection == ActionDirection.POSITIVE) {
-                        latestEvent.let { listState.scrollBy((it as Scroll).pace.toFloat()) }
-                    }else{
-                        latestEvent.let { listState.scrollBy((it as Scroll).pace.toFloat().unaryMinus()) }
-                    }
-                }
-                2 -> {
-                    if(latestEvent.actionDirection == ActionDirection.POSITIVE){
-                        listState.scrollToItem(listState.centerItemIndex + 1, 0)
-                    }else{
-                        listState.scrollToItem(listState.centerItemIndex - 1, 0)
-                    }
-                }
-            }
-        }
-    }
+    val pixelsToScroll by contactListViewModel.pixelsToScroll.observeAsState(0)
+    val scrollToNextItem by contactListViewModel.scrollToNextItem.observeAsState()
+    ScrollAnimation(pixelsToScroll, scrollToNextItem, listState)
     ContactListScreen(
         modifier,
-        separatedContact,
+        contacts,
         listState
     )
+}
+
+@Composable
+fun ScrollAnimation(pixelsToScroll: Int, scrollToNextItem: Scroll?, listState: ScalingLazyListState){
+    LaunchedEffect(pixelsToScroll){
+        listState.animateScrollBy(pixelsToScroll.toFloat())
+    }
+    /*LaunchedEffect(scrollToNextItem){
+        var nextItem = listState.centerItemIndex
+        if (scrollToNextItem != null) {
+            if(scrollToNextItem.actionDirection == ActionDirection.POSITIVE)
+                nextItem += 1
+            else
+                nextItem -= 1
+        }
+        if(nextItem >= 0)
+            listState.scrollToItem(nextItem)
+    }*/
 }
 
 @Composable
@@ -86,7 +81,12 @@ private fun ContactListScreen(
         ScalingLazyColumn(
             state = listState
         ){
-            itemsIndexed(contactsSeparatedByLetter){ index, contacts ->
+            itemsIndexed(
+                items = contactsSeparatedByLetter,
+                key = { _, list ->
+                    list.first
+                }
+            ){ index, contacts ->
                 Spacer(modifier = Modifier.padding(if(index == 0) 1.dp else 10.dp))
                 ContactGroup(contacts = contacts)
                 if(index == contactsSeparatedByLetter.lastIndex)

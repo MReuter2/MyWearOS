@@ -27,9 +27,9 @@ fun String.toSensorData(): SensorData{
         this.substringAfter("[").substringBefore("]").split(" , ")
     val locationsWithSize = mutableListOf<Pair<Int,Int>>()
     for(touchPosition in rawStringSeparatedInTouchPositions){
-        val separatLocationAndSize = touchPosition.split(",")
-        val locationString = separatLocationAndSize.first().removePrefix("{location:").trim()
-        val sizeString = separatLocationAndSize.last().trim().removePrefix("size: ").removeSuffix("}").trim()
+        val separateLocationAndSize = touchPosition.split(",")
+        val locationString = separateLocationAndSize.first().removePrefix("{\"location\":").trim()
+        val sizeString = separateLocationAndSize.last().trim().removePrefix("\"size\": ").removeSuffix("}").trim()
         val location = locationString.toIntOrNull()
         val size = sizeString.toIntOrNull()
         if(location != null && size != null){
