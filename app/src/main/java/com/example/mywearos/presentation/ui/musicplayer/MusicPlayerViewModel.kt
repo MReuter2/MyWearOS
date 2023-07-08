@@ -3,7 +3,6 @@ package com.example.mywearos.presentation.ui.musicplayer
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mywearos.data.ActionDirection
 import com.example.mywearos.data.NoEvent
 import com.example.mywearos.data.PlaybackState
 import com.example.mywearos.data.Scroll
@@ -48,7 +47,7 @@ class MusicPlayerViewModel: ViewModel() {
                 .collect{
                     when(it){
                         is Swipe ->{
-                            if(it.actionDirection == ActionDirection.POSITIVE)
+                            if(it.pace > 0)
                                 skipNextSong()
                             else
                                 skipPreviousSong()

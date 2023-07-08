@@ -12,7 +12,7 @@ data class SensorData(val locationsWithSize: List<Pair<Int, Int>>){
         locationsWithSize.forEachIndexed { index, locationA ->
             if(maxIndex > index){
                 val locationB = otherLocationAndSize[index]
-                differences.add(locationA.first - locationB.first)
+                differences.add(locationB.first - locationA.first)
             }
         }
         if(differences.isEmpty())

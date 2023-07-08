@@ -11,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlin.math.absoluteValue
 
 class ContactListViewModel: ViewModel(){
     private val _trillFlexProcessor = TrillFlexSensorProcessor()
@@ -18,8 +19,8 @@ class ContactListViewModel: ViewModel(){
     val contactList = ContactRepo.getContactsSeparatedByFirstLetter()
     private val _pixelsToScroll = MutableLiveData(0)
     val pixelsToScroll: LiveData<Int> = _pixelsToScroll
-    private val _scrollToNextItem: MutableLiveData<Scroll> = MutableLiveData()
-    val scrollToNextItem: LiveData<Scroll> = _scrollToNextItem
+    private val _doubleFingerScrollDirection: MutableLiveData<Scroll> = MutableLiveData()
+    val doubleFingerScroll: LiveData<Scroll> = _doubleFingerScrollDirection
 
     init{
         handleTrillFlexEvents()
@@ -28,18 +29,20 @@ class ContactListViewModel: ViewModel(){
     private fun handleTrillFlexEvents(){
         viewModelScope.launch(Dispatchers.IO) {
             _sensorDataWithEvent
+                .filter{
+                    val fit = it.second is Scroll
+                    fit
+                }
                 .map{ it.second }
-                .filter{ it is Scroll }
                 .collect{
-                if(it is Scroll){
-                    when(it.numberOfFingers) {
-                        1 -> _pixelsToScroll.postValue(it.pace)
+                    val currentScroll = it as Scroll
+                    when(currentScroll.numberOfFingers) {
+                        1 -> _pixelsToScroll.postValue(currentScroll.pace)
                         2 -> {
-                            if(it.pace > 10)
-                                _scrollToNextItem.postValue(it)
+                            if(currentScroll.pace.absoluteValue > 40)
+                                _doubleFingerScrollDirection.postValue(currentScroll)
                         }
                     }
-                }
             }
         }
     }

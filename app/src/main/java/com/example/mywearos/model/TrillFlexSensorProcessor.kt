@@ -1,6 +1,5 @@
 package com.example.mywearos.model
 
-import com.example.mywearos.data.ActionDirection
 import com.example.mywearos.data.NoEvent
 import com.example.mywearos.data.Scroll
 import com.example.mywearos.data.SensorData
@@ -29,13 +28,6 @@ class TrillFlexSensorProcessor {
                                          prevSensorDataWithEvent: Pair<SensorData, TrillFlexEvent>): TrillFlexEvent {
         val locationDifferenceToPreviousData =
                 newSensorData.getDifferenceBetweenOtherData(prevSensorDataWithEvent.first)
-        val actionDirection =
-            if (locationDifferenceToPreviousData.isEmpty() || locationDifferenceToPreviousData.first() == 0)
-                ActionDirection.NEUTRAL
-            else if (locationDifferenceToPreviousData.first() > 0)
-                ActionDirection.NEGATIVE
-            else
-                ActionDirection.POSITIVE
         val pace =
             if(locationDifferenceToPreviousData.isNotEmpty())
                 locationDifferenceToPreviousData.first()
@@ -47,14 +39,14 @@ class TrillFlexSensorProcessor {
             1 -> {
                 if(pace == 0)
                     return Touch(numberOfFingers)
-                return Scroll(actionDirection, pace, numberOfFingers)
+                return Scroll(pace, numberOfFingers)
             }
             2 -> {
                 if(pace == 0)
                     return Touch(numberOfFingers)
-                return Scroll(actionDirection, pace, numberOfFingers)
+                return Scroll(pace, numberOfFingers)
             }
-            else -> return Swipe(actionDirection, numberOfFingers)
+            else -> return Swipe(numberOfFingers, pace)
         }
     }
 }
